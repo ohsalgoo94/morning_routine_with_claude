@@ -13,22 +13,20 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: transparent; /* Notion 임베드를 위해 투명 설정 */
+            background: transparent;
             padding: 10px;
         }
 
-        /* 체크리스트 컨테이너 */
         .container {
             max-width: 500px;
             margin: 0 auto;
         }
         
-        /* 체크리스트 스타일 */
         .checklist {
             background: white;
             border-radius: 20px;
             padding: 25px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1); /* 그림자 약하게 조정 */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             position: relative;
         }
 
@@ -131,7 +129,6 @@
             color: #9ca3af;
         }
 
-        /* 이모지 폭발 애니메이션 */
         .emoji-burst {
             position: fixed;
             font-size: 32px;
@@ -151,7 +148,6 @@
             }
         }
 
-        /* 축하 메시지 */
         .celebration {
             position: fixed;
             top: 50%;
@@ -207,7 +203,6 @@
     </div>
 
     <script>
-        // 체크리스트 데이터
         const checklistData = [
             { emoji: '🌅', text: '알람과 함께 일어나기' },
             { emoji: '🛏️', text: '침대 정리하기' },
@@ -220,9 +215,8 @@
         ];
 
         let checkedItems = new Set();
-        const STORAGE_KEY = 'routineChecklistData'; // 데이터 충돌 방지를 위해 고유 키 사용
+        const STORAGE_KEY = 'routineChecklistData';
 
-        // 데이터 저장/불러오기
         function loadData() {
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
@@ -239,7 +233,6 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         }
 
-        // 체크리스트 렌더링
         function renderChecklist() {
             const container = document.getElementById('checklistItems');
             container.innerHTML = checklistData.map((item, index) => `
@@ -253,8 +246,24 @@
             updateProgress();
         }
 
+        function toggleCheck(index, event) {
+            if (checkedItems.has(index)) {
+                checkedItems.delete(index);
+            } else {
+                checkedItems.add(index);
+                if (event) { 
+                    createEmojiBurst(event.clientX, event.clientY); 
+                }
+            }
+            
+            renderChecklist();
+            saveData();
+            
+            if (checkedItems.size === checklistData.length) {
+                showCelebration();
+            }
+        }
 
-        // 진행도 업데이트
         function updateProgress() {
             const progress = checkedItems.size;
             const total = checklistData.length;
@@ -263,7 +272,6 @@
             document.getElementById('progressBar').style.width = `${(progress / total) * 100}%`;
         }
 
-        // 이모지 폭발
         function createEmojiBurst(x, y) {
             const emojis = ['✨', '🎉', '⭐', '💫', '🌟', '🔥', '💪', '🎯', '👏', '🎊'];
             
@@ -288,7 +296,6 @@
             }
         }
 
-        // 축하 메시지
         function showCelebration() {
             const celebration = document.createElement('div');
             celebration.className = 'celebration';
@@ -301,7 +308,6 @@
             setTimeout(() => celebration.remove(), 3000);
         }
 
-        // 초기화 및 실행
         loadData();
         renderChecklist();
     </script>
