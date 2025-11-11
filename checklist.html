@@ -233,19 +233,6 @@
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         }
 
-        function renderChecklist() {
-            const container = document.getElementById('checklistItems');
-            container.innerHTML = checklistData.map((item, index) => `
-                <div class="checklist-item ${checkedItems.has(index) ? 'checked' : ''}" onclick="toggleCheck(${index}, event)">
-                    <div class="checkbox"></div>
-                    <div class="checklist-emoji">${item.emoji}</div>
-                    <div class="checklist-text">${item.text}</div>
-                </div>
-            `).join('');
-            
-            updateProgress();
-        }
-
         function toggleCheck(index, event) {
             if (checkedItems.has(index)) {
                 checkedItems.delete(index);
@@ -262,6 +249,32 @@
             if (checkedItems.size === checklistData.length) {
                 showCelebration();
             }
+        }
+
+        // 새로운 함수: 이벤트 리스너를 항목에 추가
+        function initChecklistListeners() {
+            document.querySelectorAll('.checklist-item').forEach((item, index) => {
+                // 인라인 onclick 대신 addEventListener를 사용합니다.
+                item.addEventListener('click', (event) => {
+                    toggleCheck(index, event);
+                });
+            });
+        }
+
+        function renderChecklist() {
+            const container = document.getElementById('checklistItems');
+            // ⚠️ HTML에서 onclick 속성을 제거했습니다. data-index만 사용합니다.
+            container.innerHTML = checklistData.map((item, index) => `
+                <div class="checklist-item ${checkedItems.has(index) ? 'checked' : ''}" data-index="${index}">
+                    <div class="checkbox"></div>
+                    <div class="checklist-emoji">${item.emoji}</div>
+                    <div class="checklist-text">${item.text}</div>
+                </div>
+            `).join('');
+            
+            updateProgress();
+            // 렌더링 후 리스너를 초기화합니다.
+            initChecklistListeners();
         }
 
         function updateProgress() {
