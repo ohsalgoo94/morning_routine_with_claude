@@ -253,25 +253,6 @@
             updateProgress();
         }
 
-        // 체크 토글 (이모지 폭발 수정 적용)
-        function toggleCheck(index, event) {
-            if (checkedItems.has(index)) {
-                checkedItems.delete(index);
-            } else {
-                checkedItems.add(index);
-                // 이모지 폭발 애니메이션 호출 (event 객체 사용)
-                if (event) { 
-                    createEmojiBurst(event.clientX, event.clientY); 
-                }
-            }
-            
-            renderChecklist();
-            saveData();
-            
-            if (checkedItems.size === checklistData.length) {
-                showCelebration();
-            }
-        }
 
         // 진행도 업데이트
         function updateProgress() {
