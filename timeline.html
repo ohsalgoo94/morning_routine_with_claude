@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>타임라인 타이머</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: transparent; padding: 10px; }
+
+        /* 타임라인 타이머 */
+        .timeline-timer {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .current-time {
+            text-align: center;
+            font-size: 40px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .timeline-item.active {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            transform: scale(1.02);
+        }
+
+        .timeline-item.passed {
+            opacity: 0.5;
+        }
+
+        .timeline-time {
+            font-weight: bold;
+            color: #667eea;
+            min-width: 60px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timeline-emoji {
+            font-size: 20px; /* 크기 조정 */
+            margin: 0 10px;
+        }
+
+        .timeline-text {
+            flex: 1;
+            color: #333;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="timeline-timer">
+        <div class="current-time" id="currentTime">--:--:--</div>
+        <div id="timeline"></div>
+    </div>
+
+    <script>
+        // 타임라인 데이터
+        const timeline = [
+            { time: '07:00', emoji: '🌅', text: '알람과 함께 일어나기' },
+            { time: '07:05', emoji: '🛏️', text: '침대 정리하기' },
+            { time: '07:10', emoji: '🚿', text: '세면 & 샤워' },
+            { time: '07:25', emoji: '👕', text: '옷 입기' },
+            { time: '07:35', emoji: '🍳', text: '아침 식사' },
+            { time: '07:50', emoji: '🪥', text: '양치 & 정리' },
+            { time: '07:55', emoji: '✅', text: '가방 최종 체크' },
+            { time: '08:00', emoji: '🚪', text: '출발!' }
+        ];
+
+        // 현재 시간 업데이트
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('currentTime').textContent = `${hours}:${minutes}:${seconds}`;
+
+            updateTimeline(hours, minutes);
+        }
+
+        // 타임라인 업데이트
+        function updateTimeline(currentHours, currentMinutes) {
+            const currentTime = parseInt(currentHours) * 60 + parseInt(currentMinutes);
+            const timelineDiv = document.getElementById('timeline');
+            
+            timelineDiv.innerHTML = timeline.map(item => {
+                const [itemHours, itemMinutes] = item.time.split(':').map(Number);
+                const itemTime = itemHours * 60 + itemMinutes;
+                
+                let className = 'timeline-item';
+                if (itemTime < currentTime) {
+                    className += ' passed';
+                } else if (itemTime <= currentTime + 5) { // 현재 시간 기준 5분 이내 항목을 Active로 표시
+                    className += ' active';
+                }
+                
+                return `
+                    <div class="${className}">
+                        <div class="timeline-time">${item.time}</div>
+                        <div class="timeline-emoji">${item.emoji}</div>
+                        <div class="timeline-text">${item.text}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        updateTime();
+        setInterval(updateTime, 1000);
+    </script>
+</body>
+</html>
