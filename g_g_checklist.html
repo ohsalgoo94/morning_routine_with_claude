@@ -116,23 +116,18 @@
             background: white;
         }
 
-        /* task-emoji는 제거되었으나, 관련 CSS는 혹시 모를 레이아웃 문제를 위해 남겨둠 */
         .task-emoji {
             font-size: 24px;
             margin-bottom: 4px;
-            display: none; /* ⚠️ 표시되지 않도록 숨김 */
         }
 
         .task-text {
-            font-size: 10px; /* 글꼴 크기 조금 키움 */
+            font-size: 9px;
             color: #2B4336;
             text-align: center;
             font-weight: 600;
             letter-spacing: 0.3px;
             line-height: 1.3;
-            /* 텍스트가 가운데에 오도록 조정 */
-            padding: 0 5px;
-            margin-top: 0;
         }
 
         .task-checkbox {
@@ -195,7 +190,7 @@
             border-color: #8B4513;
         }
 
-        /* Emoji Burst (유지) */
+        /* Emoji Burst */
         .emoji-burst {
             position: fixed;
             font-size: 32px;
@@ -207,16 +202,21 @@
 <body>
     <div class="container">
         <div class="mindmap-card">
+            <!-- SVG for connection lines -->
             <svg class="connections" id="connectionsSvg">
-                </svg>
+                <!-- Lines will be drawn here -->
+            </svg>
 
+            <!-- Center Circle -->
             <div class="center-circle">
                 <div class="center-percentage" id="percentage">0%</div>
                 <div class="center-label">MORNING<br>ROUTINE</div>
             </div>
 
+            <!-- Task Circles -->
             <div class="tasks-container" id="tasksContainer"></div>
 
+            <!-- Reset Button -->
             <div class="reset-container">
                 <button class="reset-btn" id="resetBtn" onclick="handleReset()">초기화</button>
             </div>
@@ -224,26 +224,24 @@
     </div>
 
     <script>
-        // ⚠️ 이모지 속성 제거됨
         const tasks = [
-            { text: '일어나기' },
-            { text: '침대정리' },
-            { text: '샤워하기' },
-            { text: '옷입기' },
-            { text: '아침식사' },
-            { text: '양치하기' },
-            { text: '가방체크' },
-            { text: '출발!' }
+            { emoji: '🌅', text: '일어나기' },
+            { emoji: '🛏️', text: '침대정리' },
+            { emoji: '🚿', text: '샤워하기' },
+            { emoji: '👕', text: '옷입기' },
+            { emoji: '🍳', text: '아침식사' },
+            { emoji: '🪥', text: '양치하기' },
+            { emoji: '✅', text: '가방체크' },
+            { emoji: '🚪', text: '출발!' }
         ];
 
         let checkedTasks = new Set();
         let resetClickCount = 0;
         let resetTimeout = null;
-        const STORAGE_KEY = 'granola_checklist';
 
         function loadData() {
             try {
-                const saved = localStorage.getItem(STORAGE_KEY);
+                const saved = localStorage.getItem('granola_checklist');
                 if (saved) {
                     checkedTasks = new Set(JSON.parse(saved));
                 }
@@ -254,7 +252,7 @@
 
         function saveData() {
             try {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(checkedTasks)));
+                localStorage.setItem('granola_checklist', JSON.stringify(Array.from(checkedTasks)));
             } catch (e) {
                 console.log('localStorage 저장 실패');
             }
@@ -262,18 +260,138 @@
 
         function renderTasks() {
             const container = document.getElementById('tasksContainer');
-            // ⚠️ task-emoji 관련 HTML 코드 제거됨
             container.innerHTML = tasks.map((task, index) => `
-                <div class="task-circle task-${index} ${checkedTasks.has(index) ? 'checked' : ''}" data-index="${index}" id="task-${index}">
+                <div class="task-circle task-${index} ${checkedTasks.has(index) ? 'checked' : ''}" 
+                     onclick="toggleTask(${index})" 
+                     id="task-${index}">
                     <div class="task-checkbox">${checkedTasks.has(index) ? '✓' : ''}</div>
+                    <div class="task-emoji">${task.emoji}</div>
                     <div class="task-text">${task.text}</div>
                 </div>
             `).join('');
             
             updatePercentage();
             drawConnections();
-            initTaskListeners(); // 리스너 초기화 호출
         }
 
-        // ⚠️ 안정적인 이벤트 리스너 방식 사용
-        function initTaskListeners()
+        function toggleTask(index) {
+            if (checkedTasks.has(index)) {
+                checkedTasks.delete(index);
+            } else {
+                checkedTasks.add(index);
+                const taskElement = document.getElementById(`task-${index}`);
+                const rect = taskElement.getBoundingClientRect();
+                createEmojiBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            }
+            renderTasks();
+            saveData();
+        }
+
+        function updatePercentage() {
+            const percentage = Math.round((checkedTasks.size / tasks.length) * 100);
+            document.getElementById('percentage').textContent = percentage + '%';
+        }
+
+        function drawConnections() {
+            const svg = document.getElementById('connectionsSvg');
+            const card = document.querySelector('.mindmap-card');
+            const cardRect = card.getBoundingClientRect();
+            const centerX = card.offsetWidth / 2;
+            const centerY = card.offsetHeight / 2;
+            
+            let lines = '';
+            tasks.forEach((_, index) => {
+                const taskElement = document.getElementById(`task-${index}`);
+                if (taskElement) {
+                    const rect = taskElement.getBoundingClientRect();
+                    const taskCenterX = rect.left - cardRect.left + rect.width / 2;
+                    const taskCenterY = rect.top - cardRect.top + rect.height / 2;
+                    
+                    lines += `<line class="connection-line" x1="${centerX}" y1="${centerY}" x2="${taskCenterX}" y2="${taskCenterY}" />`;
+                }
+            });
+            
+            svg.innerHTML = lines;
+        }
+
+        function handleReset() {
+            resetClickCount++;
+            const btn = document.getElementById('resetBtn');
+            
+            if (resetClickCount === 1) {
+                btn.classList.add('confirming');
+                btn.textContent = '⚠️ 다시 클릭';
+                resetTimeout = setTimeout(() => {
+                    resetClickCount = 0;
+                    btn.classList.remove('confirming');
+                    btn.textContent = '초기화';
+                }, 3000);
+            } else if (resetClickCount === 2) {
+                clearTimeout(resetTimeout);
+                checkedTasks.clear();
+                renderTasks();
+                saveData();
+                btn.classList.remove('confirming');
+                btn.textContent = '✅ 초기화됨';
+                setTimeout(() => {
+                    btn.textContent = '초기화';
+                    resetClickCount = 0;
+                }, 2000);
+            }
+        }
+
+        function createEmojiBurst(x, y) {
+            const emojis = ['✨', '🌿', '🍃', '🌾'];
+            
+            for (let i = 0; i < 8; i++) {
+                const emoji = document.createElement('div');
+                emoji.className = 'emoji-burst';
+                emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                emoji.style.left = x + 'px';
+                emoji.style.top = y + 'px';
+                document.body.appendChild(emoji);
+                
+                const angle = (Math.PI * 2 * i) / 8;
+                const distance = 60 + Math.random() * 40;
+                const endX = x + Math.cos(angle) * distance;
+                const endY = y + Math.sin(angle) * distance;
+                
+                animateEmoji(emoji, x, y, endX, endY);
+            }
+        }
+
+        function animateEmoji(element, startX, startY, endX, endY) {
+            const duration = 1200;
+            const startTime = Date.now();
+            
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                
+                const currentX = startX + (endX - startX) * easeProgress;
+                const currentY = startY + (endY - startY) * easeProgress;
+                const rotation = progress * 360;
+                const scale = 1 - progress;
+                const opacity = 1 - progress;
+                
+                element.style.left = currentX + 'px';
+                element.style.top = currentY + 'px';
+                element.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
+                element.style.opacity = opacity;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    element.remove();
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        loadData();
+        renderTasks();
+        window.addEventListener('resize', drawConnections);
+    </script>
+</body>
+</html>
