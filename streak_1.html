@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>연속 성공일 위젯</title>
+    <title>연속 성공일 카운터</title>
     <style>
         * {
             margin: 0;
@@ -13,21 +13,27 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: transparent;
-            padding: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* 연속 성공일 카운터 */
+        .container {
+            width: 100%;
+            max-width: 500px;
+        }
+
         .streak-counter {
             background: white;
             border-radius: 20px;
-            padding: 30px;
+            padding: 40px;
             text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             position: relative;
             overflow: hidden;
-            max-width: 400px; /* 독립 위젯에 적합하도록 최대 폭 설정 */
-            margin: 0 auto;
         }
 
         .streak-counter::before {
@@ -40,37 +46,45 @@
             background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
         }
 
+        .streak-label {
+            font-size: 20px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
         .streak-number {
-            font-size: 60px;
+            font-size: 96px;
             font-weight: bold;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin: 10px 0;
+            margin: 20px 0;
+            line-height: 1;
         }
 
-        .streak-label {
-            font-size: 16px;
+        .streak-sublabel {
+            font-size: 18px;
             color: #666;
-            margin-bottom: 10px;
+            margin-bottom: 30px;
         }
 
         .streak-buttons {
             display: flex;
             gap: 10px;
             justify-content: center;
-            margin-top: 15px;
+            flex-wrap: wrap;
         }
 
         .streak-btn {
-            padding: 8px 15px;
+            padding: 15px 30px;
             border: none;
-            border-radius: 10px;
-            font-size: 13px;
+            border-radius: 12px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
         .streak-btn.success {
@@ -80,7 +94,8 @@
 
         .streak-btn.success:hover {
             background: #059669;
-            transform: scale(1.03);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16,185,129,0.4);
         }
 
         .streak-btn.reset {
@@ -90,56 +105,254 @@
 
         .streak-btn.reset:hover {
             background: #dc2626;
-            transform: scale(1.03);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239,68,68,0.4);
+        }
+
+        .streak-btn.reset.confirming {
+            background: #dc2626;
+            animation: pulse-red 0.5s ease-in-out;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .streak-btn:active {
+            transform: translateY(0);
+        }
+
+        .emoji-burst {
+            position: fixed;
+            font-size: 40px;
+            pointer-events: none;
+            z-index: 1000;
+            animation: burst 1.5s ease-out forwards;
+        }
+
+        @keyframes burst {
+            0% {
+                transform: translate(0, 0) scale(1) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(0) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .celebration {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: white;
+            padding: 50px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            z-index: 2000;
+            animation: popIn 0.5s ease-out forwards;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: translate(-50%, -50%) scale(0);
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .celebration-emoji {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .celebration-text {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .last-update {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .reset-confirm-text {
+            font-size: 12px;
+            color: #ef4444;
+            margin-top: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .reset-confirm-text.show {
+            opacity: 1;
         }
     </style>
 </head>
 <body>
-    <div class="streak-counter">
-        <div class="streak-label">🔥 연속 성공</div>
-        <div class="streak-number" id="streakNumber">0</div>
-        <div class="streak-label">일째 달성 중!</div>
-        <div class="streak-buttons">
-            <button class="streak-btn success" onclick="incrementStreak()">✅ 오늘 성공!</button>
-            <button class="streak-btn reset" onclick="resetStreak()">🔄 초기화</button>
+    <div class="container">
+        <div class="streak-counter">
+            <div class="streak-label">🔥 연속 성공</div>
+            <div class="streak-number" id="streakNumber">0</div>
+            <div class="streak-sublabel">일째 달성 중!</div>
+            <div class="streak-buttons">
+                <button class="streak-btn success" onclick="incrementStreak()">✅ 오늘 성공!</button>
+                <button class="streak-btn reset" id="resetBtn" onclick="handleReset()">🔄 초기화</button>
+            </div>
+            <div class="reset-confirm-text" id="confirmText">한 번 더 누르면 초기화됩니다</div>
+            <div class="last-update" id="lastUpdate"></div>
         </div>
     </div>
 
     <script>
-        const STORAGE_KEY = 'routineStreakData'; // 체크리스트와 충돌 방지를 위한 고유 키
+        let streakData = {
+            count: 0,
+            lastUpdate: null
+        };
+        
+        let resetClickCount = 0;
+        let resetTimeout = null;
 
+        // 데이터 로드
         function loadData() {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                const data = JSON.parse(saved);
-                document.getElementById('streakNumber').textContent = data.streak || 0;
+            try {
+                const saved = localStorage.getItem('streakData');
+                if (saved) {
+                    streakData = JSON.parse(saved);
+                    document.getElementById('streakNumber').textContent = streakData.count;
+                    updateLastUpdateText();
+                }
+            } catch (e) {
+                console.log('localStorage 사용 불가');
             }
         }
 
+        // 데이터 저장
         function saveData() {
-            const data = {
-                streak: parseInt(document.getElementById('streakNumber').textContent),
-                lastUpdate: new Date().toISOString()
-            };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            try {
+                localStorage.setItem('streakData', JSON.stringify(streakData));
+            } catch (e) {
+                console.log('localStorage 저장 실패');
+            }
+            updateLastUpdateText();
+        }
+
+        // 마지막 업데이트 표시
+        function updateLastUpdateText() {
+            if (streakData.lastUpdate) {
+                const date = new Date(streakData.lastUpdate);
+                const formatted = `${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`;
+                document.getElementById('lastUpdate').textContent = `마지막 업데이트: ${formatted}`;
+            }
         }
 
         // 연속 성공일 증가
         function incrementStreak() {
-            const streakNum = document.getElementById('streakNumber');
-            streakNum.textContent = parseInt(streakNum.textContent) + 1;
+            streakData.count++;
+            streakData.lastUpdate = new Date().toISOString();
+            document.getElementById('streakNumber').textContent = streakData.count;
             saveData();
+            
+            createEmojiBurstCenter();
+            
+            if (streakData.count % 7 === 0) {
+                showCelebration(`🎉 ${streakData.count}일 연속!`);
+            } else if (streakData.count === 30) {
+                showCelebration('🏆 한 달 달성!');
+            } else if (streakData.count === 100) {
+                showCelebration('👑 100일!');
+            }
         }
 
-        // 초기화 (로컬 스토리지에 0을 명시적으로 저장)
-        function resetStreak() {
-            if (confirm('정말 연속 성공일을 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
-                document.getElementById('streakNumber').textContent = '0';
+        // 초기화 (confirm 대화상자 없이 더블클릭 방식)
+        function handleReset() {
+            resetClickCount++;
+            
+            const btn = document.getElementById('resetBtn');
+            const confirmText = document.getElementById('confirmText');
+            
+            if (resetClickCount === 1) {
+                // 첫 클릭: 경고 표시
+                btn.classList.add('confirming');
+                confirmText.classList.add('show');
+                btn.textContent = '⚠️ 다시 클릭';
                 
-                // 🚀 핵심 수정: 로컬 스토리지에 streak 값을 0으로 덮어씁니다.
-                const data = { streak: 0, lastUpdate: new Date().toISOString() };
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); 
+                // 3초 후 리셋
+                resetTimeout = setTimeout(() => {
+                    resetClickCount = 0;
+                    btn.classList.remove('confirming');
+                    confirmText.classList.remove('show');
+                    btn.textContent = '🔄 초기화';
+                }, 3000);
+                
+            } else if (resetClickCount === 2) {
+                // 두 번째 클릭: 실제 초기화
+                clearTimeout(resetTimeout);
+                
+                streakData.count = 0;
+                streakData.lastUpdate = new Date().toISOString();
+                document.getElementById('streakNumber').textContent = '0';
+                saveData();
+                
+                // UI 복구
+                btn.classList.remove('confirming');
+                confirmText.classList.remove('show');
+                btn.textContent = '✅ 초기화됨';
+                
+                setTimeout(() => {
+                    btn.textContent = '🔄 초기화';
+                    resetClickCount = 0;
+                }, 2000);
             }
+        }
+
+        // 이모지 폭발 (화면 중앙)
+        function createEmojiBurstCenter() {
+            const emojis = ['✨', '🎉', '⭐', '💫', '🌟', '🔥', '💪', '🎯', '👏', '🎊'];
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            
+            for (let i = 0; i < 12; i++) {
+                const emoji = document.createElement('div');
+                emoji.className = 'emoji-burst';
+                emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                emoji.style.left = centerX + 'px';
+                emoji.style.top = centerY + 'px';
+                
+                const angle = (Math.PI * 2 * i) / 12;
+                const distance = 100 + Math.random() * 80;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+                
+                emoji.style.setProperty('--tx', `${tx}px`);
+                emoji.style.setProperty('--ty', `${ty}px`);
+                
+                document.body.appendChild(emoji);
+                
+                setTimeout(() => emoji.remove(), 1500);
+            }
+        }
+
+        // 축하 메시지
+        function showCelebration(message) {
+            const celebration = document.createElement('div');
+            celebration.className = 'celebration';
+            celebration.innerHTML = `
+                <div class="celebration-emoji">🎉</div>
+                <div class="celebration-text">${message}</div>
+            `;
+            document.body.appendChild(celebration);
+            
+            setTimeout(() => celebration.remove(), 3000);
         }
 
         loadData();
