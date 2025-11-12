@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>모닝 루틴 체크리스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #FAF5F0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .mindmap-card {
+            background: #2B4336;
+            border-radius: 32px;
+            padding: 48px 32px;
+            position: relative;
+            min-height: 520px;
+        }
+
+        /* Center Circle */
+        .center-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 140px;
+            height: 140px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .center-percentage {
+            font-size: 36px;
+            font-weight: 700;
+            color: #2B4336;
+            line-height: 1;
+        }
+
+        .center-label {
+            font-size: 10px;
+            color: #2B4336;
+            margin-top: 8px;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        /* SVG Lines */
+        .connections {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .connection-line {
+            stroke: rgba(250, 245, 240, 0.3);
+            stroke-width: 2;
+            fill: none;
+        }
+
+        /* Task Circles */
+        .tasks-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 424px;
+        }
+
+        .task-circle {
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            background: rgba(232, 221, 208, 0.9);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            z-index: 5;
+        }
+
+        .task-circle:hover {
+            transform: scale(1.05);
+            background: rgba(232, 221, 208, 1);
+        }
+
+        .task-circle.checked {
+            background: white;
+        }
+
+        .task-emoji {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+
+        .task-text {
+            font-size: 9px;
+            color: #2B4336;
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            line-height: 1.3;
+        }
+
+        .task-checkbox {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #2B4336;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+        }
+
+        .task-circle.checked .task-checkbox {
+            background: #2B4336;
+            color: white;
+        }
+
+        /* Positions (8 circles around center) */
+        .task-0 { top: 10px; left: 50%; transform: translateX(-50%); }
+        .task-1 { top: 60px; right: 40px; }
+        .task-2 { top: 50%; right: 10px; transform: translateY(-50%); }
+        .task-3 { bottom: 60px; right: 40px; }
+        .task-4 { bottom: 10px; left: 50%; transform: translateX(-50%); }
+        .task-5 { bottom: 60px; left: 40px; }
+        .task-6 { top: 50%; left: 10px; transform: translateY(-50%); }
+        .task-7 { top: 60px; left: 40px; }
+
+        /* Reset Button */
+        .reset-container {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+        }
+
+        .reset-btn {
+            background: rgba(232, 221, 208, 0.3);
+            color: #FAF5F0;
+            border: 1.5px solid rgba(250, 245, 240, 0.5);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .reset-btn:hover {
+            background: rgba(232, 221, 208, 0.5);
+        }
+
+        .reset-btn.confirming {
+            background: #8B4513;
+            border-color: #8B4513;
+        }
+
+        /* Emoji Burst */
+        .emoji-burst {
+            position: fixed;
+            font-size: 32px;
+            pointer-events: none;
+            z-index: 9999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="mindmap-card">
+            <!-- SVG for connection lines -->
+            <svg class="connections" id="connectionsSvg">
+                <!-- Lines will be drawn here -->
+            </svg>
+
+            <!-- Center Circle -->
+            <div class="center-circle">
+                <div class="center-percentage" id="percentage">0%</div>
+                <div class="center-label">MORNING<br>ROUTINE</div>
+            </div>
+
+            <!-- Task Circles -->
+            <div class="tasks-container" id="tasksContainer"></div>
+
+            <!-- Reset Button -->
+            <div class="reset-container">
+                <button class="reset-btn" id="resetBtn" onclick="handleReset()">초기화</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const tasks = [
+            { text: '일어나기' },
+            { text: '침대정리' },
+            { text: '샤워하기' },
+            { text: '옷입기' },
+            { text: '아침식사' },
+            { text: '양치하기' },
+            { text: '가방체크' },
+            { text: '출발!' }
+        ];
+
+        let checkedTasks = new Set();
+        let resetClickCount = 0;
+        let resetTimeout = null;
+
+        function loadData() {
+            try {
+                const saved = localStorage.getItem('granola_checklist');
+                if (saved) {
+                    checkedTasks = new Set(JSON.parse(saved));
+                }
+            } catch (e) {
+                console.log('localStorage 사용 불가');
+            }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem('granola_checklist', JSON.stringify(Array.from(checkedTasks)));
+            } catch (e) {
+                console.log('localStorage 저장 실패');
+            }
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('tasksContainer');
+            container.innerHTML = tasks.map((task, index) => `
+                <div class="task-circle task-${index} ${checkedTasks.has(index) ? 'checked' : ''}" 
+                     onclick="toggleTask(${index})" 
+                     id="task-${index}">
+                    <div class="task-checkbox">${checkedTasks.has(index) ? '✓' : ''}</div>
+                    <div class="task-emoji">${task.emoji}</div>
+                    <div class="task-text">${task.text}</div>
+                </div>
+            `).join('');
+            
+            updatePercentage();
+            drawConnections();
+        }
+
+        function toggleTask(index) {
+            if (checkedTasks.has(index)) {
+                checkedTasks.delete(index);
+            } else {
+                checkedTasks.add(index);
+                const taskElement = document.getElementById(`task-${index}`);
+                const rect = taskElement.getBoundingClientRect();
+                createEmojiBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            }
+            renderTasks();
+            saveData();
+        }
+
+        function updatePercentage() {
+            const percentage = Math.round((checkedTasks.size / tasks.length) * 100);
+            document.getElementById('percentage').textContent = percentage + '%';
+        }
+
+        function drawConnections() {
+            const svg = document.getElementById('connectionsSvg');
+            const card = document.querySelector('.mindmap-card');
+            const cardRect = card.getBoundingClientRect();
+            const centerX = card.offsetWidth / 2;
+            const centerY = card.offsetHeight / 2;
+            
+            let lines = '';
+            tasks.forEach((_, index) => {
+                const taskElement = document.getElementById(`task-${index}`);
+                if (taskElement) {
+                    const rect = taskElement.getBoundingClientRect();
+                    const taskCenterX = rect.left - cardRect.left + rect.width / 2;
+                    const taskCenterY = rect.top - cardRect.top + rect.height / 2;
+                    
+                    lines += `<line class="connection-line" x1="${centerX}" y1="${centerY}" x2="${taskCenterX}" y2="${taskCenterY}" />`;
+                }
+            });
+            
+            svg.innerHTML = lines;
+        }
+
+        function handleReset() {
+            resetClickCount++;
+            const btn = document.getElementById('resetBtn');
+            
+            if (resetClickCount === 1) {
+                btn.classList.add('confirming');
+                btn.textContent = '⚠️ 다시 클릭';
+                resetTimeout = setTimeout(() => {
+                    resetClickCount = 0;
+                    btn.classList.remove('confirming');
+                    btn.textContent = '초기화';
+                }, 3000);
+            } else if (resetClickCount === 2) {
+                clearTimeout(resetTimeout);
+                checkedTasks.clear();
+                renderTasks();
+                saveData();
+                btn.classList.remove('confirming');
+                btn.textContent = '✅ 초기화됨';
+                setTimeout(() => {
+                    btn.textContent = '초기화';
+                    resetClickCount = 0;
+                }, 2000);
+            }
+        }
+
+        function createEmojiBurst(x, y) {
+            const emojis = ['✨', '🌿', '🍃', '🌾'];
+            
+            for (let i = 0; i < 8; i++) {
+                const emoji = document.createElement('div');
+                emoji.className = 'emoji-burst';
+                emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                emoji.style.left = x + 'px';
+                emoji.style.top = y + 'px';
+                document.body.appendChild(emoji);
+                
+                const angle = (Math.PI * 2 * i) / 8;
+                const distance = 60 + Math.random() * 40;
+                const endX = x + Math.cos(angle) * distance;
+                const endY = y + Math.sin(angle) * distance;
+                
+                animateEmoji(emoji, x, y, endX, endY);
+            }
+        }
+
+        function animateEmoji(element, startX, startY, endX, endY) {
+            const duration = 1200;
+            const startTime = Date.now();
+            
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                
+                const currentX = startX + (endX - startX) * easeProgress;
+                const currentY = startY + (endY - startY) * easeProgress;
+                const rotation = progress * 360;
+                const scale = 1 - progress;
+                const opacity = 1 - progress;
+                
+                element.style.left = currentX + 'px';
+                element.style.top = currentY + 'px';
+                element.style.transform = `scale(${scale}) rotate(${rotation}deg)`;
+                element.style.opacity = opacity;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    element.remove();
+                }
+            }
+            requestAnimationFrame(animate);
+        }
+
+        loadData();
+        renderTasks();
+        window.addEventListener('resize', drawConnections);
+    </script>
+</body>
+</html>
