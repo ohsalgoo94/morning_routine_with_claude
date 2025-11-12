@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>모닝 타임라인</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #FAF5F0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .timeline-card {
+            background: #FAF5F0;
+            border-radius: 24px;
+            padding: 32px 24px;
+        }
+
+        /* Clock Section */
+        .clock-section {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .clock-icon {
+            width: 48px;
+            height: 48px;
+            background: #2B4336;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 16px;
+            box-shadow: 0 4px 12px rgba(43, 67, 54, 0.2);
+        }
+
+        .clock-icon svg {
+            width: 24px;
+            height: 24px;
+            stroke: #FAF5F0;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .current-time {
+            font-size: 40px;
+            font-weight: 700;
+            color: #2B4336;
+            letter-spacing: -1px;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .current-date {
+            font-size: 12px;
+            color: #2B4336;
+            opacity: 0.5;
+            margin-top: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Timeline Items */
+        .timeline-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 20px;
+            background: white;
+            border-radius: 16px;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .timeline-item.passed {
+            opacity: 0.4;
+        }
+
+        .timeline-item.active {
+            background: #2B4336;
+            border-color: #2B4336;
+            box-shadow: 0 4px 16px rgba(43, 67, 54, 0.2);
+            transform: scale(1.02);
+        }
+
+        .timeline-item.upcoming {
+            background: white;
+        }
+
+        .item-time {
+            font-size: 15px;
+            font-weight: 700;
+            color: #2B4336;
+            min-width: 50px;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.5px;
+        }
+
+        .timeline-item.active .item-time {
+            color: #FAF5F0;
+        }
+
+        .item-emoji {
+            font-size: 24px;
+        }
+
+        .item-content {
+            flex: 1;
+        }
+
+        .item-text {
+            font-size: 14px;
+            color: #2B4336;
+            font-weight: 500;
+            letter-spacing: 0.2px;
+        }
+
+        .timeline-item.active .item-text {
+            color: #FAF5F0;
+        }
+
+        .item-countdown {
+            font-size: 11px;
+            color: #2B4336;
+            opacity: 0.5;
+            margin-top: 4px;
+        }
+
+        .timeline-item.active .item-countdown {
+            color: #FAF5F0;
+            opacity: 0.7;
+        }
+
+        .item-status {
+            font-size: 10px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        .status-passed {
+            background: rgba(43, 67, 54, 0.1);
+            color: #2B4336;
+        }
+
+        .status-active {
+            background: #E8DDD0;
+            color: #2B4336;
+            animation: pulse-status 2s infinite;
+        }
+
+        @keyframes pulse-status {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .status-upcoming {
+            background: rgba(43, 67, 54, 0.05);
+            color: #2B4336;
+            opacity: 0.6;
+        }
+
+        /* Progress Overview */
+        .progress-section {
+            display: flex;
+            justify-content: space-around;
+            margin: 32px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 16px;
+        }
+
+        .progress-item {
+            text-align: center;
+        }
+
+        .progress-label {
+            font-size: 10px;
+            color: #2B4336;
+            opacity: 0.5;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .progress-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2B4336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="timeline-card">
+            <!-- Clock Section -->
+            <div class="clock-section">
+                <div class="clock-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                </div>
+                <div class="current-time" id="currentTime">--:--:--</div>
+                <div class="current-date" id="currentDate">--</div>
+            </div>
+
+            <!-- Progress Overview -->
+            <div class="progress-section">
+                <div class="progress-item">
+                    <div class="progress-label">완료</div>
+                    <div class="progress-value" id="completedCount">0</div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-label">진행중</div>
+                    <div class="progress-value" id="activeCount">0</div>
+                </div>
+                <div class="progress-item">
+                    <div class="progress-label">남음</div>
+                    <div class="progress-value" id="upcomingCount">0</div>
+                </div>
+            </div>
+
+            <!-- Timeline Items -->
+            <div class="timeline-list" id="timelineList"></div>
+        </div>
+    </div>
+
+    <script>
+        const timeline = [
+            { time: '06:00', emoji: '🌅', text: '일어나기' },
+            { time: '06:10', emoji: '🛏️', text: '침대 정리' },
+            { time: '06:15', emoji: '🚿', text: '샤워하기' },
+            { time: '06:30', emoji: '👕', text: '옷 입기' },
+            { time: '06:40', emoji: '🍳', text: '아침 식사' },
+            { time: '07:00', emoji: '🪥', text: '양치하기' },
+            { time: '07:10', emoji: '✅', text: '가방 체크' },
+            { time: '07:15', emoji: '🚪', text: '출발!' }
+        ];
+
+        const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
+
+        function updateTime() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            document.getElementById('currentTime').textContent = `${hours}:${minutes}:${seconds}`;
+            
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const date = now.getDate();
+            const day = weekdays[now.getDay()];
+            
+            document.getElementById('currentDate').textContent = `${year}.${month}.${date} ${day}요일`;
+            
+            updateTimeline(hours, minutes);
+        }
+
+        function getTimeDifference(targetHours, targetMinutes, currentHours, currentMinutes) {
+            const target = parseInt(targetHours) * 60 + parseInt(targetMinutes);
+            const current = parseInt(currentHours) * 60 + parseInt(currentMinutes);
+            return target - current;
+        }
+
+        function formatTimeDifference(minutes) {
+            if (minutes < 0) return `${Math.abs(minutes)}분 전`;
+            if (minutes === 0) return '지금!';
+            if (minutes < 60) return `${minutes}분 후`;
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            return mins > 0 ? `${hours}시간 ${mins}분 후` : `${hours}시간 후`;
+        }
+
+        function updateTimeline(currentHours, currentMinutes) {
+            const currentTime = parseInt(currentHours) * 60 + parseInt(currentMinutes);
+            const list = document.getElementById('timelineList');
+            
+            let completedCount = 0;
+            let activeCount = 0;
+            let upcomingCount = 0;
+            
+            const html = timeline.map(item => {
+                const [itemHours, itemMinutes] = item.time.split(':').map(Number);
+                const itemTime = itemHours * 60 + itemMinutes;
+                const diff = getTimeDifference(itemHours, itemMinutes, currentHours, currentMinutes);
+                
+                let className = 'timeline-item';
+                let statusClass = '';
+                let statusText = '';
+                let countdown = '';
+                
+                if (itemTime < currentTime - 5) {
+                    className += ' passed';
+                    statusClass = 'status-passed';
+                    statusText = '완료';
+                    completedCount++;
+                } else if (itemTime <= currentTime + 5) {
+                    className += ' active';
+                    statusClass = 'status-active';
+                    statusText = '진행중';
+                    activeCount++;
+                    if (diff > 0) {
+                        countdown = `<div class="item-countdown">${formatTimeDifference(diff)}</div>`;
+                    }
+                } else {
+                    className += ' upcoming';
+                    statusClass = 'status-upcoming';
+                    statusText = '대기';
+                    upcomingCount++;
+                    countdown = `<div class="item-countdown">${formatTimeDifference(diff)}</div>`;
+                }
+                
+                return `
+                    <div class="${className}">
+                        <div class="item-time">${item.time}</div>
+                        <div class="item-emoji">${item.emoji}</div>
+                        <div class="item-content">
+                            <div class="item-text">${item.text}</div>
+                            ${countdown}
+                        </div>
+                        <div class="item-status ${statusClass}">${statusText}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            list.innerHTML = html;
+            
+            document.getElementById('completedCount').textContent = completedCount;
+            document.getElementById('activeCount').textContent = activeCount;
+            document.getElementById('upcomingCount').textContent = upcomingCount;
+        }
+
+        updateTime();
+        setInterval(updateTime, 1000);
+    </script>
+</body>
+</html>
